@@ -26,19 +26,20 @@ import { FaRegFlag } from 'react-icons/fa6';
 import { IoMdHelpCircleOutline } from 'react-icons/io';
 import { MdOutlineFeedback } from 'react-icons/md';
 import { MdKeyboardArrowRight } from 'react-icons/md';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import { clearSelectedQuery } from '../utils/searchSlice';
 const Sidebar = () => {
   const isMenuOpen = useSelector((store) => store.app.isMenuOpen);
-
+  const dispatch = useDispatch();
   // Early return pattern
 
   if (!isMenuOpen)
     return (
-      <div className="shadow-lg mr-5 h-screen">
+      <div className="shadow-lg mr-5 h-screen sticky top-0 ">
         <ul className="justify-items-center">
           <li className="  hover:bg-gray-200 rounded-lg p-3 px-4">
-            <Link to="/">
+            <Link to="/" onClick={() => dispatch(clearSelectedQuery())}>
               <IoHome className="size-6 mr-2" />
               <p className="text-xs -ml-1">Home</p>
             </Link>
@@ -72,10 +73,13 @@ const Sidebar = () => {
     );
 
   return (
-    <div className="shadow-lg mr-5">
+    <div className="shadow-lg mr-5 ">
       <ul>
         <Link to="/">
-          <li className="flex m-2 hover:bg-gray-200 rounded-lg p-2">
+          <li
+            className="flex m-2 hover:bg-gray-200 rounded-lg p-2"
+            onClick={() => dispatch(clearSelectedQuery())}
+          >
             <IoHome className="size-6 mr-2" />
             <p className="text-sm mt-1">Home</p>
           </li>

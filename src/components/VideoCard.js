@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 const VideoCard = ({ info }) => {
-  // const { snippet, statistics } = info;
-  // const { channelTitle, title, thumbnails } = snippet;
   return (
-    <div className="m-2 p-2 w-72 shadow-lg">
+    <div className="m-2 p-2 w-72 shadow-lg h-[360px] rounded-md">
       <div className="rounded-lg  p-0.5">
         <div className="relative rounded-xl overflow-hidden">
           <img
@@ -36,6 +34,15 @@ const VideoCard = ({ info }) => {
           </p>
         </div>
       </div>
+    </div>
+  );
+};
+
+export const AdVideoCard = ({ info }) => {
+  return (
+    <div className=" border-4 border-red-900 bg-gray-100">
+      <VideoCard info={info} />
+      <p className="font-bold">Ad</p>
     </div>
   );
 };

@@ -2,14 +2,69 @@ import { IoMenu } from 'react-icons/io5';
 import 'react-image-crop/dist/ReactCrop.css';
 import { IoSearch } from 'react-icons/io5';
 import { GrMicrophone } from 'react-icons/gr';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { toggleMenu } from '../utils/appSlice';
+import { useEffect, useState } from 'react';
+import { YOUTUBE_SEARCH_API } from '../utils/constants';
+import {
+  cacheResults,
+  clearSelectedQuery,
+  setSelectedQuery,
+} from '../utils/searchSlice';
 
 const Head = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const searchCache = useSelector((store) => store.search.cache);
   const dispatch = useDispatch();
+
+  /**
+   * {
+   * "iphone" : ["iphone", "iphone 11"];
+   * }
+   */
+
+  useEffect(() => {
+    if (!searchQuery) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (searchCache[searchQuery]) {
+        setSuggestions(searchCache[searchQuery]);
+      } else {
+        getSearchSuggestions();
+      }
+    }, 200);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [suggestions]);
+
+  const getSearchSuggestions = async () => {
+    console.log('API CALL- ', searchQuery);
+    const data = await fetch(YOUTUBE_SEARCH_API + searchQuery);
+    const json = await data.json();
+    // console.log('json', json[1]);
+    setSuggestions(json[1]);
+    dispatch(cacheResults({ [searchQuery]: json[1] }));
+  };
 
   const toggleMenuHandler = () => {
     dispatch(toggleMenu());
+  };
+
+  const handleSearch = (query) => {
+    if (!query) return;
+    dispatch(setSelectedQuery(query));
+    setSearchQuery(query);
+    setShowSuggestions(false);
   };
 
   return (
@@ -19,7 +74,7 @@ const Head = () => {
           className="size-8 mt-1 cursor-pointer"
           onClick={toggleMenuHandler}
         />
-        <a href="/">
+        <a href="/" onClick={() => dispatch(clearSelectedQuery())}>
           <img
             className="h-20 w-15 -mt-5 -ml-3"
             src="https://static.vecteezy.com/system/resources/thumbnails/018/930/572/small/youtube-logo-youtube-icon-transparent-free-png.png"
@@ -28,14 +83,82 @@ const Head = () => {
         </a>
         <h4 className="font-bold text-xl -ml-7 mt-1.5">Premium</h4>
       </div>
-      <div className="flex mt-1 col-span-10 justify-center">
-        <input
-          className="border border-gray-700 rounded-l-full w-[600px] h-10 p-1 pl-2 justify-center align-center"
-          placeholder="Search"
-          type="text"
-        />
-        <IoSearch className="size-10 -mb-5 border border-gray-700 rounded-r-full p-2 justify-center align-center bg-gray-700 text-white" />
-        <GrMicrophone className="size-9  bg-gray-700 rounded-full p-2 text-white ml-2 mt-0.5" />
+      <div className="relative mt-1 col-span-10 justify-center ml-56">
+        <div className="flex">
+          <input
+            className="border border-gray-700 rounded-l-full w-[600px] h-10 p-1 pl-5 justify-center align-center"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setActiveIndex(-1);
+              setShowSuggestions(true);
+            }}
+            type="text"
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setShowSuggestions(false)}
+            onKeyDown={(e) => {
+              if (!showSuggestions || showSuggestions.length === 0) return;
+
+              switch (e.key) {
+                case 'ArrowDown':
+                  e.preventDefault();
+                  setActiveIndex((prev) =>
+                    prev < suggestions.length - 1 ? prev + 1 : 0,
+                  );
+                  break;
+
+                case 'ArrowUp':
+                  e.preventDefault();
+                  setActiveIndex((prev) =>
+                    prev > 0 ? prev - 1 : suggestions.length - 1,
+                  );
+                  break;
+
+                case 'Enter':
+                  e.preventDefault();
+                  if (activeIndex >= 0) {
+                    handleSearch(suggestions[activeIndex]);
+                  } else {
+                    handleSearch(searchQuery);
+                  }
+                  break;
+
+                case 'Escape':
+                  setShowSuggestions(false);
+                  break;
+
+                default:
+                  break;
+              }
+            }}
+          />
+          <IoSearch
+            onClick={() => handleSearch(searchQuery)}
+            className="size-10 -mb-5 border border-gray-700 rounded-r-full p-2 justify-center align-center bg-gray-700 text-white"
+          />
+          <GrMicrophone className="size-9  bg-gray-700 rounded-full p-2 text-white ml-2 mt-0.5" />
+        </div>
+        {showSuggestions && (
+          <div className=" absolute bg-white py-2 px-5 w-[38rem] z-50 rounded-lg shadow-lg">
+            <ul>
+              {suggestions.map((s, index) => (
+                <li
+                  className={`flex py-2 shadow-sm rounded-lg cursor-pointer ${
+                    index === activeIndex ? 'bg-gray-200' : 'hover:bg-gray-100'
+                  }`}
+                  key={s}
+                  onMouseDown={() => {
+                    handleSearch(s);
+                  }}
+                >
+                  <IoSearch className="size-5 mr-1 mt-1" />
+                  {s}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
       <div className="col-span-1">
         <img
