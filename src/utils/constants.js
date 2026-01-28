@@ -10,4 +10,6 @@ export const YOUTUBE_SEARCH_API =
 export const YOUTUBE_SEARCHKEYWORD_API =
   'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=';
 
+export const OFFSET_LIVE_CHAT = 25;
+
 // Live Chat >>> infinite scroll >>> Pagination
